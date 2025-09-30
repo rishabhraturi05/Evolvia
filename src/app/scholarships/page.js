@@ -36,7 +36,7 @@ const ScholarshipsPage = () => {
 
   // Filter scholarships by search keyword
   const filteredScholarships = scholarships.filter((sch) =>
-    sch.Name.toLowerCase().includes(search.toLowerCase())
+    (sch.Name || "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -71,14 +71,18 @@ const ScholarshipsPage = () => {
               <p className="text-gray-600 mt-1">
                 <strong>Colleges:</strong> {sch.Colleges}
               </p>
-              <Link
-                href={sch.Link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-block text-blue-600 hover:underline font-medium"
-              >
-                <i className="fa-solid fa-link"></i> Official Notification / Apply
-              </Link>
+              {sch.Link ? (
+                <Link
+                  href={sch.Link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block text-blue-600 hover:underline font-medium"
+                >
+                  <i className="fa-solid fa-link"></i> Official Notification / Apply
+                </Link>
+              ) : (
+                <span className="mt-3 inline-block text-gray-500">No link available</span>
+              )}
             </div>
           ))}
         </div>

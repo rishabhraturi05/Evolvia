@@ -1,7 +1,6 @@
 "use client"
 import Link from 'next/link';
-import { React } from 'react'
-import { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 // import { useSession, signIn, signOut } from "next-auth/react"
 
@@ -10,6 +9,10 @@ export const Navbar = () => {
     // State to manage the visibility of the mobile menu
 //     const { data: session } = useSession()
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState(null);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
 //     if(session) {
 //     return <>
 //       Signed in as {session.user.email} <br/>
@@ -17,7 +20,65 @@ export const Navbar = () => {
 //     </>
 //   }
 
-    
+    // Initialize auth state from localStorage and listen to storage changes
+    useEffect(() => {
+        const loadAuth = () => {
+            try {
+                const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+                const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+                if (token && storedUser) {
+                    setIsAuthenticated(true);
+                    setUser(JSON.parse(storedUser));
+                } else {
+                    setIsAuthenticated(false);
+                    setUser(null);
+                }
+            } catch (_) {
+                setIsAuthenticated(false);
+                setUser(null);
+            }
+        };
+
+        loadAuth();
+
+        const onStorage = (e) => {
+            if (e.key === 'token' || e.key === 'user') {
+                loadAuth();
+            }
+        };
+        window.addEventListener('storage', onStorage);
+
+        return () => window.removeEventListener('storage', onStorage);
+    }, []);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        if (isDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isDropdownOpen]);
+
+    const toggleDropdown = () => setIsDropdownOpen((v) => !v);
+
+    const handleLogout = () => {
+        try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        } catch (_) {}
+        setIsAuthenticated(false);
+        setUser(null);
+        setIsDropdownOpen(false);
+        setIsMenuOpen(false);
+        window.location.href = '/';
+    };
 
     const navLinks = [
         { href: "/", text: "Home" },
@@ -67,13 +128,39 @@ export const Navbar = () => {
                         </div>
 
 
-                        {/* Right section: Login Button for Desktop */}
-                        {/* <div className="hidden md:block"> */}
-                        <Link href="/login">
-                        <button className="bg-[#F39C12] text-white font-bold py-2 px-6 rounded-lg hover:bg-yellow-600 hover:cursor-pointer transition-transform duration-300 ease-in-out transform hover:scale-105">
-                            Login
-                        </button>
-                        </Link>
+                        {/* Right section: Auth area for Desktop */}
+                        <div className="hidden md:block relative" ref={dropdownRef}>
+                            {isAuthenticated ? (
+                                <>
+                                    <button
+                                        onClick={toggleDropdown}
+                                        aria-haspopup="true"
+                                        aria-expanded={isDropdownOpen}
+                                        className="w-10 h-10 rounded-full bg-[#F39C12] text-white font-bold flex items-center justify-center hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F39C12]"
+                                        title={user?.firstName ? `Hello, ${user.firstName}` : 'Profile'}
+                                    >
+                                        {(user?.firstName?.[0] || 'U').toUpperCase()}
+                                    </button>
+                                    {isDropdownOpen && (
+                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black/5 z-50">
+                                            <div className="px-4 py-2 text-sm text-gray-700 border-b">Hello{user?.firstName ? `, ${user.firstName}` : ''}</div>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                            >
+                                                Log out
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <Link href="/login">
+                                    <button className="bg-[#F39C12] text-white font-bold py-2 px-6 rounded-lg hover:bg-yellow-600 hover:cursor-pointer transition-transform duration-300 ease-in-out transform hover:scale-105">
+                                        Login
+                                    </button>
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -115,11 +202,23 @@ export const Navbar = () => {
                         </Link>
                     ))}
                     <div className="pt-4 pb-3 border-t border-gray-700">
-                        <Link href="/login">
-                            <button className="w-full text-left bg-[#F39C12] text-[#2C3E50] font-bold py-2 px-3 rounded-md hover:bg-yellow-400 transition-colors duration-300">
-                                Login
-                            </button>
-                        </Link>
+                        {isAuthenticated ? (
+                            <div className="space-y-2">
+                                <div className="text-gray-300 px-3">Hello{user?.firstName ? `, ${user.firstName}` : ''}</div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full text-left bg-[#F39C12] text-[#2C3E50] font-bold py-2 px-3 rounded-md hover:bg-yellow-400 transition-colors duration-300"
+                                >
+                                    Log out
+                                </button>
+                            </div>
+                        ) : (
+                            <Link href="/login">
+                                <button className="w-full text-left bg-[#F39C12] text-[#2C3E50] font-bold py-2 px-3 rounded-md hover:bg-yellow-400 transition-colors duration-300">
+                                    Login
+                                </button>
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>

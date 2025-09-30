@@ -19,7 +19,7 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('http://localhost:5000/api/auth/login', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ const Login = () => {
                         {/* Sign Up Link */}
                         <div className="text-center mt-6">
                             <p className="text-gray-300">
-                                Don't have an account?{' '}
+                                Don&apos;t have an account?{' '}
                                 <Link href="/sign-up" className="text-[#F39C12] hover:text-yellow-400 font-medium transition duration-300">
                                     Sign up here
                                 </Link>

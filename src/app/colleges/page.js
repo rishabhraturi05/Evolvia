@@ -1,32 +1,54 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const CollegeTable = () => {
-  const colleges = [
-    { sr: 1, name: "University of Jammu", address: "Baba Saheb Ambedkar Road, Jammu Tawi, Jammu, J&K – 180006" },
-    { sr: 2, name: "University of Kashmir", address: "Hazratbal, Srinagar, J&K – 190006" },
-    { sr: 3, name: "Shri Mata Vaishno Devi University", address: "Sub-Post Office, SMVDU Campus, Katra, Reasi, J&K – 182320" },
-    { sr: 4, name: "Government College for Women, Parade", address: "Parade Ground, Jammu, J&K – 180001" },
-    { sr: 5, name: "Government Degree College, Baramulla", address: "Kanth Bagh, Baramulla, J&K – 193101" },
-  ];
-
-  const [filtered, setFiltered] = useState(colleges);
+  const [colleges, setColleges] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedColleges, setSelectedColleges] = useState([]);
 
-  // LOGIC FIX: Accept the `college` object directly
+  // Fetch colleges from MongoDB
+  useEffect(() => {
+    const fetchColleges = async () => {
+      try {
+        const response = await fetch("/api/colleges");
+        if (!response.ok) {
+          throw new Error("Failed to fetch colleges");
+        }
+        const data = await response.json();
+        setColleges(data);
+        setFiltered(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchColleges();
+  }, []);
+
+  // Selection logic (max 3 colleges)
   const handleClick = (clickedCollege) => {
-    const selected = [...selectedColleges];
-    const alreadySelected = selected.find((c) => c.sr === clickedCollege.sr);
+    const alreadySelected = selectedColleges.find(
+      (c) => c.srNo === clickedCollege.srNo
+    );
 
     if (alreadySelected) {
-      setSelectedColleges(selected.filter((c) => c.sr !== clickedCollege.sr));
-    } else if (selected.length < 3) {
-      setSelectedColleges([...selected, clickedCollege]);
+      // Remove it
+      setSelectedColleges(
+        selectedColleges.filter((c) => c.srNo !== clickedCollege.srNo)
+      );
+    } else if (selectedColleges.length < 3) {
+      // Add only if less than 3
+      setSelectedColleges([...selectedColleges, clickedCollege]);
     }
   };
 
+  // Search filter
   const handleChange = (e) => {
     const search = e.target.value;
     const filteredColleges = colleges.filter((el) =>
@@ -69,48 +91,80 @@ const CollegeTable = () => {
 
       {/* Table Section */}
       <div className="p-6 m-4">
-        <div className="overflow-x-auto rounded-lg shadow-md">
-          <table className="w-full border-collapse">
-            <thead className="sticky top-0 z-10">
-              <tr className="bg-gray-100 text-gray-700 text-sm uppercase tracking-wide">
-                <th className="px-6 py-3 border">Sr. No.</th>
-                <th className="px-6 py-3 border">College Name</th>
-                <th className="px-6 py-3 border">Address</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length > 0 ? (
-                filtered.map((college) => (
-                  <tr
-                    key={college.sr}
-                    className="odd:bg-white even:bg-gray-50 hover:bg-amber-50 transition-colors duration-300"
-                  >
-                    <td className="px-6 py-3 border text-gray-700 font-medium">{college.sr}</td>
-                    <td className="px-6 py-3 border text-gray-800 font-semibold flex items-center gap-2">
-                      {college.name}
-                      <button
-                        // LOGIC FIX: Pass the entire `college` object
-                        onClick={() => handleClick(college)}
-                        className={`px-3 py-1 rounded-lg text-white text-sm font-medium transition shadow-sm ${
-                          selectedColleges.find((c) => c.sr === college.sr)
-                            ? "bg-red-500 hover:bg-red-600"
-                            : "bg-[#F39C12] hover:bg-[#a26605]"
-                        }`}
-                      >
-                        {selectedColleges.find((c) => c.sr === college.sr) ? "Remove" : "Select"}
-                      </button>
-                    </td>
-                    <td className="px-6 py-3 border text-gray-600">{college.address}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="3" className="text-center py-6 text-gray-500 italic">No colleges found.</td>
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F39C12]"></div>
+            <span className="ml-3 text-gray-600">Loading colleges...</span>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <div className="text-red-500 text-lg font-semibold mb-2">
+              Error loading colleges
+            </div>
+            <div className="text-gray-600">{error}</div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg shadow-md">
+            <table className="w-full border-collapse">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-gray-100 text-gray-700 text-sm uppercase tracking-wide">
+                  <th className="py-6 border text-center">Sr. No.</th>
+                  <th className="px-6 py-3 border">College Name</th>
+                  <th className="px-6 py-3 border">Address</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.length > 0 ? (
+                  filtered.map((college) => (
+                    <tr
+                      key={college._id}
+                      className="odd:bg-white even:bg-gray-50 hover:bg-amber-50 transition-colors duration-300"
+                    >
+                      <td className="py-3 border text-gray-700 font-medium text-center">
+                        {college.srNo}
+                      </td>
+                      <td className="px-6 py-3 border text-gray-800 font-semibold items-center text-center">
+                        {college.name}
+                        <button
+                          onClick={() => handleClick(college)}
+                          className={`ml-4 px-3 py-1 rounded-lg text-white text-sm font-medium transition shadow-sm ${
+                            selectedColleges.find(
+                              (c) => c.srNo === college.srNo
+                            )
+                              ? "bg-red-500 hover:bg-red-600"
+                              : "bg-[#F39C12] hover:bg-[#a26605]"
+                          }`}
+                        >
+                          {selectedColleges.find(
+                            (c) => c.srNo === college.srNo
+                          )
+                            ? "Remove"
+                            : "Select"}
+                        </button>
+                      </td>
+                      <td className="px-6 py-3 border text-gray-600 text-center">
+                        {college.location}
+                        <br />
+                        {college.phoneNumber}
+                        <br />
+                        {college.emailAddress}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="3"
+                      className="text-center py-6 text-gray-500 italic"
+                    >
+                      No colleges found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {selectedColleges.length === 3 && (
@@ -135,7 +189,9 @@ const CollegeTable = () => {
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Compare Colleges</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+                Compare Colleges
+              </h2>
               {selectedColleges.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
@@ -143,29 +199,39 @@ const CollegeTable = () => {
                       <tr className="bg-gray-100 text-gray-700 text-sm uppercase tracking-wide">
                         <th className="px-6 py-3 border text-left">Field</th>
                         {selectedColleges.map((college) => (
-                          // SYNTAX FIX: Use backticks for the key prop
-                          <th key={`header-${college.sr}`} className="px-6 py-3 border text-left">
-                            College {college.sr}
+                          <th
+                            key={`header-${college.srNo}`}
+                            className="px-6 py-3 border text-left"
+                          >
+                            College {college.srNo}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="hover:bg-gray-50">
-                        <td className="px-6 py-3 border font-semibold text-gray-800">College Name</td>
+                        <td className="px-6 py-3 border font-semibold text-gray-800">
+                          College Name
+                        </td>
                         {selectedColleges.map((college) => (
-                          // SYNTAX FIX: Use backticks for the key prop
-                          <td key={`name-${college.sr}`} className="px-6 py-3 border text-gray-700">
+                          <td
+                            key={`name-${college.srNo}`}
+                            className="px-6 py-3 border text-gray-700"
+                          >
                             {college.name}
                           </td>
                         ))}
                       </tr>
                       <tr className="hover:bg-gray-50">
-                        <td className="px-6 py-3 border font-semibold text-gray-800">Address</td>
+                        <td className="px-6 py-3 border font-semibold text-gray-800">
+                          Address
+                        </td>
                         {selectedColleges.map((college) => (
-                           // SYNTAX FIX: Use backticks for the key prop
-                          <td key={`address-${college.sr}`} className="px-6 py-3 border text-gray-600">
-                            {college.address}
+                          <td
+                            key={`address-${college.srNo}`}
+                            className="px-6 py-3 border text-gray-600"
+                          >
+                            {college.location}
                           </td>
                         ))}
                       </tr>
@@ -173,7 +239,9 @@ const CollegeTable = () => {
                   </table>
                 </div>
               ) : (
-                <p className="text-gray-600 text-center">No colleges selected for comparison.</p>
+                <p className="text-gray-600 text-center">
+                  No colleges selected for comparison.
+                </p>
               )}
               <div className="flex justify-center mt-6">
                 <button
