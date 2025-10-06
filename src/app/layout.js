@@ -1,4 +1,5 @@
 // "use client"
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css";
 import { Poppins, Montserrat, Open_Sans, Nunito_Sans } from "next/font/google";
 import { Navbar } from "./components/navbar";
@@ -49,6 +50,7 @@ export default function RootLayout({ children }) {
         <PageTransition>
           <Navbar />
           {children}
+          <Analytics />
           <Footer />
         </PageTransition>
       </body>
