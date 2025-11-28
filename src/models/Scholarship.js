@@ -13,7 +13,7 @@ const ScholarshipSchema = new mongoose.Schema(
     link: { type: String },
     sr_no: { type: Number },
   },
-  { timestamps: true, collection: 'sch' }
+  { timestamps: true, collection: 'Scholarship' }
 );
 
 export default mongoose.models.Scholarship ||

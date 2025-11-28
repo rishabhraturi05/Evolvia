@@ -20,6 +20,7 @@ export async function GET() {
 
     return NextResponse.json(scholarships, { status: 200 });
   } catch (error) {
+    console.log('cant fetch',error)
     return NextResponse.json(
       { message: 'Failed to fetch scholarships', error: error.message },
       { status: 500 }

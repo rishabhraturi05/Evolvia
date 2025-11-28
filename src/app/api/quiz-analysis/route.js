@@ -69,7 +69,7 @@ Please make the analysis personal, encouraging, and actionable. Use a warm, prof
 
   } catch (error) {
     console.error('Quiz analysis error:', error);
-    
+
     // Fallback response if API fails
     const fallbackAnalysis = `
 **Career Analysis Results**

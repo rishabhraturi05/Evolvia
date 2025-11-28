@@ -35,8 +35,9 @@ const ScholarshipsPage = () => {
   if (error) return <div className="text-red-500 p-6">Error: {error}</div>;
 
   // Filter scholarships by search keyword
-  const filteredScholarships = scholarships.filter((sch) =>
-    (sch.Name || "").toLowerCase().includes(search.toLowerCase())
+  const normalizedScholarships = Array.isArray(scholarships) ? scholarships : [];
+  const filteredScholarships = normalizedScholarships.filter((sch) =>
+    (sch?.Name || "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
