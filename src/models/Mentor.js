@@ -3,6 +3,26 @@ import bcrypt from 'bcryptjs';
 
 const MentorSchema = new mongoose.Schema(
   {
+    Name: { 
+      type: String, 
+      required: [true, 'Name is required'],
+      trim: true 
+    },
+    Title: { 
+      type: String, 
+      required: [true, 'Title is required'],
+      trim: true 
+    },
+    Bio: { 
+      type: String, 
+      required: [true, 'Bio is required'],
+      trim: true 
+    },
+    Photo: { 
+      type: String, 
+      required: [true, 'Photo is required'],
+      trim: true 
+    },
     email: {
       type: String,
       required: [true, 'Email is required'],

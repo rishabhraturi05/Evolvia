@@ -1,89 +1,17 @@
-import React from 'react'
+"use client";
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
+import FullPageLoader from '../components/loader'
 
-const mentors = [
-  {
-    id: 1,
-    name: 'Dr. Ayesha Khan',
-    title: 'Cardiologist, SKIMS Srinagar',
-    bio: 'Raised in Baramulla, Dr. Khan pursued medicine and now mentors students aspiring for NEET and medical careers.',
-    avatar: 'https://i.pravatar.cc/600?img=47',
-    email: 'ayesha.khan@example.com',
-    rating: 4.9
-  },
-  {
-    id: 2,
-    name: 'Prof. Rahul Sharma',
-    title: 'Professor of Computer Science, JU',
-    bio: 'From Jammu, Prof. Sharma is passionate about guiding students in software engineering and research careers.',
-    avatar: 'https://i.pravatar.cc/600?img=12',
-    email: 'rahul.sharma@example.com',
-    rating: 4.8
-  },
-  {
-    id: 3,
-    name: 'IAS Meera Qadri',
-    title: 'Indian Administrative Service',
-    bio: 'Hailing from Anantnag, Meera mentors UPSC aspirants with a focus on strategy, consistency, and well-being.',
-    avatar: 'https://i.pravatar.cc/600?img=5',
-    email: 'meera.qadri@example.com',
-    rating: 4.9
-  },
-  {
-    id: 4,
-    name: 'Er. Adil Mir',
-    title: 'Structural Engineer, Srinagar',
-    bio: 'An NIT Srinagar alumnus, Adil helps students with GATE prep, core engineering careers, and portfolios.',
-    avatar: 'https://i.pravatar.cc/600?img=33',
-    email: 'adil.mir@example.com',
-    rating: 4.7
-  },
-  {
-    id: 5,
-    name: 'Dr. Kiran Gupta',
-    title: 'Psychologist, Jammu',
-    bio: 'Guides students on stress management, exam preparation mindset, and holistic growth.',
-    avatar: 'https://i.pravatar.cc/600?img=52',
-    email: 'kiran.gupta@example.com',
-    rating: 4.8
-  },
-  {
-    id: 6,
-    name: 'Ar. Sana Wani',
-    title: 'Architect, Srinagar',
-    bio: 'Mentors design portfolios, NATA/JEE B.Arch prep, and studio readiness.',
-    avatar: 'https://i.pravatar.cc/600?img=15',
-    email: 'sana.wani@example.com',
-    rating: 4.6
-  },
-  {
-    id: 7,
-    name: 'Lt. Col. Vivek Singh',
-    title: 'Indian Army (Retd.)',
-    bio: 'Advises on SSB preparation, discipline building, and defense careers.',
-    avatar: 'https://i.pravatar.cc/600?img=67',
-    email: 'vivek.singh@example.com',
-    rating: 4.8
-  },
-  {
-    id: 8,
-    name: 'C.A. Nida Bashir',
-    title: 'Chartered Accountant, Jammu',
-    bio: 'Helps with CA Foundation/Inter strategy and finance careers.',
-    avatar: 'https://i.pravatar.cc/600?img=25',
-    email: 'nida.bashir@example.com',
-    rating: 4.9
-  }
-]
 
 const MentorCard = ({ mentor }) => {
   return (
     <div className="relative rounded-3xl overflow-hidden bg-slate-800/70 backdrop-blur-sm shadow-xl transition transform hover:-translate-y-1 hover:shadow-2xl">
-      <div className="absolute right-3 top-3">
+      {/* <div className="absolute right-3 top-3">
         <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-[#F39C12] text-white shadow">
           {mentor.rating.toFixed(1)}+
         </span>
-      </div>
+      </div> */}
       <div className="flex flex-col items-center pt-8 px-5 pb-5">
         <div className="relative w-28 h-28 -mt-2">
           <Image
@@ -111,6 +39,43 @@ const MentorCard = ({ mentor }) => {
 }
 
 const page = () => {
+  const [mentors, setMentors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchMentors = async () => {
+      try {
+        const response = await fetch('/api/mentors');
+        if (!response.ok) {
+          throw new Error('Failed to fetch mentors');
+        }
+        const data = await response.json();
+        
+        // Map MongoDB fields to component expected fields
+        const mappedMentors = data.map((mentor) => ({
+          id: mentor._id,
+          name: mentor.Name || '',
+          title: mentor.Title || '',
+          bio: mentor.Bio || '',
+          avatar: mentor.Photo || 'https://i.pravatar.cc/600?img=1',
+          email: mentor.email || '',
+        }));
+        
+        setMentors(mappedMentors);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMentors();
+  }, []);
+
+  if (loading) return <FullPageLoader />;
+  if (error) return <div className="text-red-500 p-6 text-center">Error: {error}</div>;
+
   return (
     <section className="px-6 py-12 md:py-16 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800">
       <div className="max-w-7xl mx-auto">
@@ -123,11 +88,17 @@ const page = () => {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-7">
-          {mentors.map((m) => (
-            <MentorCard key={m.id} mentor={m} />
-          ))}
-        </div>
+        {mentors.length === 0 ? (
+          <div className="text-center text-slate-300 py-12">
+            <p>No mentors available at the moment.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-7">
+            {mentors.map((m) => (
+              <MentorCard key={m.id} mentor={m} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
