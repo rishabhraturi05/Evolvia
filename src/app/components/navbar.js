@@ -143,7 +143,11 @@ export const Navbar = () => {
                                     </button>
                                     {isDropdownOpen && (
                                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black/5 z-50">
-                                            <div className="px-4 py-2 text-sm text-gray-700 border-b"><Link href="\Dashboard\Mentor">Dashboard</Link></div>
+                                            <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                                                <Link href={user?.role === 'mentor' ? '/Dashboard/Mentor' : '/Dashboard/Student'}>
+                                                    Dashboard
+                                                </Link>
+                                            </div>
                                             <div className="px-4 py-2 text-sm text-gray-700 border-b">Hello{user?.firstName ? `, ${user.firstName}` : ''}</div>
                                             <button
                                                 onClick={handleLogout}
@@ -206,6 +210,12 @@ export const Navbar = () => {
                         {isAuthenticated ? (
                             <div className="space-y-2">
                                 <div className="text-gray-300 px-3">Hello{user?.firstName ? `, ${user.firstName}` : ''}</div>
+                                <Link 
+                                    href={user?.role === 'mentor' ? '/Dashboard/Mentor' : '/Dashboard/Student'}
+                                    className="block w-full text-left bg-[#F39C12] text-[#2C3E50] font-bold py-2 px-3 rounded-md hover:bg-yellow-400 transition-colors duration-300"
+                                >
+                                    Dashboard
+                                </Link>
                                 <button
                                     onClick={handleLogout}
                                     className="w-full text-left bg-[#F39C12] text-[#2C3E50] font-bold py-2 px-3 rounded-md hover:bg-yellow-400 transition-colors duration-300"
