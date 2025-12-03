@@ -143,6 +143,7 @@ export const Navbar = () => {
                                     </button>
                                     {isDropdownOpen && (
                                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black/5 z-50">
+                                            <div className="px-4 py-2 text-sm text-gray-700 border-b"><Link href="\Dashboard\Mentor">Dashboard</Link></div>
                                             <div className="px-4 py-2 text-sm text-gray-700 border-b">Hello{user?.firstName ? `, ${user.firstName}` : ''}</div>
                                             <button
                                                 onClick={handleLogout}

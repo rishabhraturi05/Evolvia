@@ -1,33 +1,45 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongoose';
 import User from '@/models/User';
+import Mentor from '@/models/Mentor';
 import jwt from 'jsonwebtoken';
 
 export async function POST(request) {
   try {
     await connectToDatabase();
     
-    const { email, password } = await request.json();
+    const { email, password, role } = await request.json();
+
+    // Normalize inputs
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const normalizedPassword = typeof password === 'string' ? password.trim() : '';
 
     // Validation
-    if (!email || !password) {
+    if (!normalizedEmail || !normalizedPassword || !role) {
       return NextResponse.json(
-        { message: 'Email and password are required' },
+        { message: 'Email, password and role are required' },
         { status: 400 }
       );
     }
 
-    // Find user by email
-    const user = await User.findOne({ email }).select('+password');
-    if (!user) {
+    const userRole = role === 'mentor' ? 'mentor' : 'student';
+
+    // Choose model based on role
+    const Model = userRole === 'mentor' ? Mentor : User;
+
+    // Find account by email
+    const account = await Model.findOne({ email: normalizedEmail }).select('+password');
+    // console.log("🔍 Mentor login debug — Fetched account:", account);
+    if (!account) {
+      // console.log('Login failed: account not found', { email: normalizedEmail, role: userRole ,password:password});
       return NextResponse.json(
         { message: 'Invalid email or password' },
         { status: 401 }
       );
     }
 
-    // Check if user is active
-    if (!user.isActive) {
+    // For students, check if user is active (mentors currently don't have this flag)
+    if (userRole === 'student' && account.isActive === false) {
       return NextResponse.json(
         { message: 'Account is deactivated. Please contact support.' },
         { status: 401 }
@@ -35,7 +47,7 @@ export async function POST(request) {
     }
 
     // Verify password
-    const isPasswordValid = await user.comparePassword(password);
+    const isPasswordValid = await account.comparePassword(password);
     if (!isPasswordValid) {
       return NextResponse.json(
         { message: 'Invalid email or password' },
@@ -45,13 +57,13 @@ export async function POST(request) {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { userId: account._id, email: account.email, role: userRole },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
 
-    // Return user data without password
-    const userData = user.toJSON();
+    // Return account data without password
+    const userData = account.toJSON();
 
     return NextResponse.json(
       {

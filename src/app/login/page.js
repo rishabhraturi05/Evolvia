@@ -6,7 +6,8 @@ import Image from 'next/image';
 const Login = () => {
     const [formData, setFormData] = useState({
         email: '',
-        password: ''
+        password: '',
+        role: 'student', // default selection
     });
 
     const handleChange = (e) => {
@@ -76,6 +77,37 @@ const Login = () => {
                             </div>
                             <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
                             <p className="text-gray-300">Sign in to continue your journey</p>
+                        </div>
+
+                        {/* Role Selection */}
+                        <div className="mb-6">
+                            <p className="block text-sm font-medium text-white mb-2">
+                                Sign in as
+                            </p>
+                            <div className="flex items-center gap-6">
+                                <label className="flex items-center gap-2 text-gray-200 text-sm cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="role"
+                                        value="student"
+                                        checked={formData.role === 'student'}
+                                        onChange={handleChange}
+                                        className="text-[#F39C12] focus:ring-[#F39C12]"
+                                    />
+                                    <span>Student</span>
+                                </label>
+                                <label className="flex items-center gap-2 text-gray-200 text-sm cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="role"
+                                        value="mentor"
+                                        checked={formData.role === 'mentor'}
+                                        onChange={handleChange}
+                                        className="text-[#F39C12] focus:ring-[#F39C12]"
+                                    />
+                                    <span>Mentor</span>
+                                </label>
+                            </div>
                         </div>
 
                         {/* Login Form */}
