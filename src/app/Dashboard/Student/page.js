@@ -4,6 +4,79 @@ import Image from 'next/image'
 import FullPageLoader from '../../components/loader'
 
 const MentorCard = ({ mentor }) => {
+  const formatDate = (dateString) => {
+    if (!dateString) return null;
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  const formatDateTime = (dateValue, timeString) => {
+    if (!dateValue || !timeString) return null;
+    try {
+      let date;
+      if (dateValue instanceof Date) {
+        date = dateValue;
+      } else if (typeof dateValue === 'string') {
+        // If dateValue is already a full ISO string, use it directly
+        if (dateValue.includes('T')) {
+          date = new Date(dateValue);
+        } else {
+          // If it's just a date string, combine with time
+          date = new Date(`${dateValue}T${timeString}`);
+        }
+      } else {
+        return null;
+      }
+      
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+      
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  const getStatusBadge = () => {
+    const status = mentor.status || 'pending';
+    switch (status) {
+      case 'accepted':
+        return (
+          <span className="text-xs text-green-400 font-semibold px-3 py-1 bg-green-400/10 rounded-full">
+            Accepted ✓
+          </span>
+        );
+      case 'rejected':
+        return (
+          <span className="text-xs text-red-400 font-semibold px-3 py-1 bg-red-400/10 rounded-full">
+            Rejected ✗
+          </span>
+        );
+      default:
+        return (
+          <span className="text-xs text-yellow-400 font-semibold px-3 py-1 bg-yellow-400/10 rounded-full">
+            Pending ⏳
+          </span>
+        );
+    }
+  };
+
   return (
     <div className="relative rounded-3xl overflow-hidden bg-slate-800/70 backdrop-blur-sm shadow-xl transition transform hover:-translate-y-1 hover:shadow-2xl">
       <div className="flex flex-col items-center pt-8 px-5 pb-5">
@@ -23,9 +96,21 @@ const MentorCard = ({ mentor }) => {
           <a href={`mailto:${mentor.email}`} className="text-xs text-slate-300 hover:text-white underline underline-offset-4">
             {mentor.email}
           </a>
-          <span className="text-xs text-green-400 font-semibold px-3 py-1 bg-green-400/10 rounded-full">
-            Applied ✓
-          </span>
+          {getStatusBadge()}
+          {mentor.status === 'accepted' && mentor.meetingDate && mentor.meetingTime && (
+            <div className="mt-2 w-full text-center px-3 py-2 bg-green-400/10 rounded-lg border border-green-400/20">
+              <p className="text-xs text-green-400 font-semibold mb-1">Meeting Scheduled</p>
+              <p className="text-xs text-slate-300">
+                {formatDateTime(mentor.meetingDate, mentor.meetingTime) || 
+                 `${formatDate(mentor.meetingDate)} at ${mentor.meetingTime}`}
+              </p>
+            </div>
+          )}
+          {mentor.respondedAt && (
+            <p className="text-xs text-slate-400 text-center">
+              Responded on {formatDate(mentor.respondedAt)}
+            </p>
+          )}
         </div>
       </div>
     </div>

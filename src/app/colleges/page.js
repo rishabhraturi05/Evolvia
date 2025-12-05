@@ -19,8 +19,10 @@ const CollegeTable = () => {
           throw new Error("Failed to fetch colleges");
         }
         const data = await response.json();
-        setColleges(data);
-        setFiltered(data);
+        // Sort by srNo to ensure serial order
+        const sortedData = data.sort((a, b) => (a.srNo || 0) - (b.srNo || 0));
+        setColleges(sortedData);
+        setFiltered(sortedData);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -108,9 +110,18 @@ const CollegeTable = () => {
             <table className="w-full border-collapse">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-gray-100 text-gray-700 text-sm uppercase tracking-wide">
-                  <th className="py-6 border text-center">Sr. No.</th>
-                  <th className="px-6 py-3 border">College Name</th>
-                  <th className="px-6 py-3 border">Address</th>
+                  <th className="py-3 px-4 border text-center">Sr. No.</th>
+                  <th className="px-4 py-3 border">College Name</th>
+                  <th className="px-4 py-3 border">Courses</th>
+                  <th className="px-4 py-3 border">Location</th>
+                  <th className="px-4 py-3 border">Entrance Exams</th>
+                  <th className="px-4 py-3 border">ROI</th>
+                  <th className="px-4 py-3 border">NIRF</th>
+                  <th className="px-4 py-3 border">Phone</th>
+                  <th className="px-4 py-3 border">Email</th>
+                  <th className="px-4 py-3 border">Website</th>
+                  <th className="px-4 py-3 border">Fees Estimates</th>
+                  <th className="px-4 py-3 border">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,14 +131,52 @@ const CollegeTable = () => {
                       key={college._id}
                       className="odd:bg-white even:bg-gray-50 hover:bg-amber-50 transition-colors duration-300"
                     >
-                      <td className="py-3 border text-gray-700 font-medium text-center">
+                      <td className="py-3 px-4 border text-gray-700 font-medium text-center">
                         {college.srNo}
                       </td>
-                      <td className="px-6 py-3 border text-gray-800 font-semibold items-center text-center">
-                        {college.name}
+                      <td className="px-4 py-3 border text-gray-800 font-semibold">
+                        {college.name || '-'}
+                      </td>
+                      <td className="px-4 py-3 border text-gray-600 text-sm">
+                        {college.courses || '-'}
+                      </td>
+                      <td className="px-4 py-3 border text-gray-600 text-sm">
+                        {college.location || '-'}
+                      </td>
+                      <td className="px-4 py-3 border text-gray-600 text-sm">
+                        {college.entranceExams || '-'}
+                      </td>
+                      <td className="px-4 py-3 border text-gray-600 text-sm">
+                        {college.returnOnInvestment || '-'}
+                      </td>
+                      <td className="px-4 py-3 border text-gray-600 text-sm">
+                        {college.nirf || '-'}
+                      </td>
+                      <td className="px-4 py-3 border text-gray-600 text-sm">
+                        {college.phoneNumber || '-'}
+                      </td>
+                      <td className="px-4 py-3 border text-gray-600 text-sm">
+                        {college.emailAddress || '-'}
+                      </td>
+                      <td className="px-4 py-3 border text-gray-600 text-sm">
+                        {college.website ? (
+                          <a 
+                            href={college.website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {college.website}
+                          </a>
+                        ) : '-'}
+                      </td>
+                      <td className="px-4 py-3 border text-gray-600 text-sm">
+                        {college.feesEstimates || '-'}
+                      </td>
+                      <td className="px-4 py-3 border text-center">
                         <button
                           onClick={() => handleClick(college)}
-                          className={`ml-4 px-3 py-1 rounded-lg text-white text-sm font-medium transition shadow-sm ${
+                          className={`px-3 py-1 rounded-lg text-white text-xs font-medium transition shadow-sm ${
                             selectedColleges.find(
                               (c) => c.srNo === college.srNo
                             )
@@ -142,19 +191,12 @@ const CollegeTable = () => {
                             : "Select"}
                         </button>
                       </td>
-                      <td className="px-6 py-3 border text-gray-600 text-center">
-                        {college.location}
-                        <br />
-                        {college.phoneNumber}
-                        <br />
-                        {college.emailAddress}
-                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td
-                      colSpan="3"
+                      colSpan="12"
                       className="text-center py-6 text-gray-500 italic"
                     >
                       No colleges found.
@@ -193,45 +235,171 @@ const CollegeTable = () => {
                 Compare Colleges
               </h2>
               {selectedColleges.length > 0 ? (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto max-h-[70vh]">
                   <table className="w-full border-collapse">
-                    <thead>
+                    <thead className="sticky top-0 bg-gray-100">
                       <tr className="bg-gray-100 text-gray-700 text-sm uppercase tracking-wide">
-                        <th className="px-6 py-3 border text-left">Field</th>
+                        <th className="px-4 py-3 border text-left">Field</th>
                         {selectedColleges.map((college) => (
                           <th
                             key={`header-${college.srNo}`}
-                            className="px-6 py-3 border text-left"
+                            className="px-4 py-3 border text-left"
                           >
-                            College {college.srNo}
+                            {college.name || `College ${college.srNo}`}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="hover:bg-gray-50">
-                        <td className="px-6 py-3 border font-semibold text-gray-800">
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
+                          Serial No.
+                        </td>
+                        {selectedColleges.map((college) => (
+                          <td
+                            key={`srNo-${college.srNo}`}
+                            className="px-4 py-3 border text-gray-700"
+                          >
+                            {college.srNo || '-'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
                           College Name
                         </td>
                         {selectedColleges.map((college) => (
                           <td
                             key={`name-${college.srNo}`}
-                            className="px-6 py-3 border text-gray-700"
+                            className="px-4 py-3 border text-gray-700"
                           >
-                            {college.name}
+                            {college.name || '-'}
                           </td>
                         ))}
                       </tr>
                       <tr className="hover:bg-gray-50">
-                        <td className="px-6 py-3 border font-semibold text-gray-800">
-                          Address
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
+                          Courses
                         </td>
                         {selectedColleges.map((college) => (
                           <td
-                            key={`address-${college.srNo}`}
-                            className="px-6 py-3 border text-gray-600"
+                            key={`courses-${college.srNo}`}
+                            className="px-4 py-3 border text-gray-600"
                           >
-                            {college.location}
+                            {college.courses || '-'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
+                          Location
+                        </td>
+                        {selectedColleges.map((college) => (
+                          <td
+                            key={`location-${college.srNo}`}
+                            className="px-4 py-3 border text-gray-600"
+                          >
+                            {college.location || '-'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
+                          Entrance Exams
+                        </td>
+                        {selectedColleges.map((college) => (
+                          <td
+                            key={`entranceExams-${college.srNo}`}
+                            className="px-4 py-3 border text-gray-600"
+                          >
+                            {college.entranceExams || '-'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
+                          Return on Investment
+                        </td>
+                        {selectedColleges.map((college) => (
+                          <td
+                            key={`roi-${college.srNo}`}
+                            className="px-4 py-3 border text-gray-600"
+                          >
+                            {college.returnOnInvestment || '-'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
+                          NIRF
+                        </td>
+                        {selectedColleges.map((college) => (
+                          <td
+                            key={`nirf-${college.srNo}`}
+                            className="px-4 py-3 border text-gray-600"
+                          >
+                            {college.nirf || '-'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
+                          Phone Number
+                        </td>
+                        {selectedColleges.map((college) => (
+                          <td
+                            key={`phone-${college.srNo}`}
+                            className="px-4 py-3 border text-gray-600"
+                          >
+                            {college.phoneNumber || '-'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
+                          Email Address
+                        </td>
+                        {selectedColleges.map((college) => (
+                          <td
+                            key={`email-${college.srNo}`}
+                            className="px-4 py-3 border text-gray-600"
+                          >
+                            {college.emailAddress || '-'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
+                          Website
+                        </td>
+                        {selectedColleges.map((college) => (
+                          <td
+                            key={`website-${college.srNo}`}
+                            className="px-4 py-3 border text-gray-600"
+                          >
+                            {college.website ? (
+                              <a 
+                                href={college.website} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {college.website}
+                              </a>
+                            ) : '-'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-3 border font-semibold text-gray-800">
+                          Fees Estimates
+                        </td>
+                        {selectedColleges.map((college) => (
+                          <td
+                            key={`fees-${college.srNo}`}
+                            className="px-4 py-3 border text-gray-600"
+                          >
+                            {college.feesEstimates || '-'}
                           </td>
                         ))}
                       </tr>

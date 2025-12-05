@@ -60,12 +60,23 @@ export async function POST(request) {
       // Create new application document
       application = new MentorApplication({
         userId: decoded.userId,
-        mentorIds: [mentorId]
+        mentorIds: [mentorId],
+        mentorStatuses: [{
+          mentorId: mentorId,
+          status: 'pending'
+        }]
       });
     } else {
       // Add mentor if not already in the list
-      if (!application.mentorIds.includes(mentorId)) {
+      if (!application.mentorIds.some(id => id.toString() === mentorId.toString())) {
         application.mentorIds.push(mentorId);
+        // Also add to mentorStatuses with pending status
+        if (!application.mentorStatuses.some(ms => ms.mentorId.toString() === mentorId.toString())) {
+          application.mentorStatuses.push({
+            mentorId: mentorId,
+            status: 'pending'
+          });
+        }
       } else {
         return NextResponse.json(
           { message: 'You have already applied to this mentor' },
@@ -117,15 +128,27 @@ export async function GET(request) {
       );
     }
 
-    // Map mentors to match the expected format
-    const mentors = application.mentorIds.map((mentor) => ({
-      id: mentor._id,
-      name: mentor.Name || '',
-      title: mentor.Title || '',
-      bio: mentor.Bio || '',
-      avatar: mentor.Photo || 'https://i.pravatar.cc/600?img=1',
-      email: mentor.email || '',
-    }));
+    // Map mentors to match the expected format with status
+    const mentors = application.mentorIds.map((mentor) => {
+      // Find the status for this mentor
+      const mentorStatus = application.mentorStatuses?.find(
+        ms => ms.mentorId.toString() === mentor._id.toString()
+      ) || { status: 'pending' };
+
+      return {
+        id: mentor._id,
+        name: mentor.Name || '',
+        title: mentor.Title || '',
+        bio: mentor.Bio || '',
+        avatar: mentor.Photo || 'https://i.pravatar.cc/600?img=1',
+        email: mentor.email || '',
+        status: mentorStatus.status || 'pending',
+        respondedAt: mentorStatus.respondedAt || null,
+        meetingDate: mentorStatus.meetingDate || null,
+        meetingTime: mentorStatus.meetingTime || null,
+        meetingScheduledAt: mentorStatus.meetingScheduledAt || null,
+      };
+    });
 
     return NextResponse.json(
       { mentors },

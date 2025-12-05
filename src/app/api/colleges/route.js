@@ -5,7 +5,7 @@ import College from '@/models/College';
 export async function GET() {
   try {
     await connectToDatabase();
-    const colleges = await College.find({}).sort({ sr: 1 }).lean();
+    const colleges = await College.find({}).sort({ srNo: 1 }).lean();
 
     return NextResponse.json(colleges, { status: 200 });
   } catch (error) {
