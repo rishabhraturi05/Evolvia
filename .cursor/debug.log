@@ -1,2 +1,0 @@
-{"location":"server-custom.js:54","message":"Socket.IO server initialized","data":{"hypothesisId":"A"},"timestamp":1765463759650,"sessionId":"debug-session","runId":"run2","hypothesisId":"A"}
-{"location":"server-custom.js:112","message":"Custom server started","data":{"port":3000,"hypothesisId":"A"},"timestamp":1765463759653,"sessionId":"debug-session","runId":"run2","hypothesisId":"A"}
