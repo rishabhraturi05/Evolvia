@@ -29,20 +29,17 @@ const MentorCard = ({ mentor, onRetract, retractingId, onJoin }) => {
   const formatDateTime = (dateValue, timeString) => {
     if (!dateValue || !timeString) return null;
     try {
-      let date;
+      // Extract YYYY-MM-DD from ISO string or Date object
+      let dateStr = '';
       if (dateValue instanceof Date) {
-        date = dateValue;
+        dateStr = dateValue.toISOString().split('T')[0];
       } else if (typeof dateValue === 'string') {
-        // If dateValue is already a full ISO string, use it directly
-        if (dateValue.includes('T')) {
-          date = new Date(dateValue);
-        } else {
-          // If it's just a date string, combine with time
-          date = new Date(`${dateValue}T${timeString}`);
-        }
+        dateStr = dateValue.split('T')[0];
       } else {
         return null;
       }
+
+      const date = new Date(`${dateStr}T${timeString}`);
 
       if (isNaN(date.getTime())) {
         return null;
@@ -63,9 +60,15 @@ const MentorCard = ({ mentor, onRetract, retractingId, onJoin }) => {
 
   const getMeetingDateObj = () => {
     if (!mentor.meetingDate || !mentor.meetingTime) return null;
-    const combined = mentor.meetingDate.includes('T')
-      ? new Date(mentor.meetingDate)
-      : new Date(`${mentor.meetingDate}T${mentor.meetingTime}`);
+
+    // Normalize date string to YYYY-MM-DD
+    const dateStr = typeof mentor.meetingDate === 'string' && mentor.meetingDate.includes('T')
+      ? mentor.meetingDate.split('T')[0]
+      : mentor.meetingDate instanceof Date
+        ? mentor.meetingDate.toISOString().split('T')[0]
+        : mentor.meetingDate;
+
+    const combined = new Date(`${dateStr}T${mentor.meetingTime}`);
     return isNaN(combined.getTime()) ? null : combined;
   };
 
