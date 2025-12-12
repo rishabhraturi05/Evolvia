@@ -1,180 +1,257 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
+import Peer from "peerjs";
 
-const iceServers = [{ urls: "stun:stun.l.google.com:19302" }];
+const MeetingRoom = ({ roomId, role = "Student", onLeave }) => {
+    const [peerId, setPeerId] = useState("");
+    const [remotePeerId, setRemotePeerId] = useState("");
+    const [localStream, setLocalStream] = useState(null);
+    const [remoteStream, setRemoteStream] = useState(null);
+    const [status, setStatus] = useState("Initializing...");
+    const [isMuted, setIsMuted] = useState(false);
+    const [isVideoOff, setIsVideoOff] = useState(false);
 
-const MeetingRoom = ({ meetingId, onClose, displayName = "You" }) => {
-  const socketRef = useRef(null);
-  const pcRef = useRef(null);
-  const localStreamRef = useRef(null);
-  const remoteStreamRef = useRef(null);
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const [status, setStatus] = useState("Connecting…");
+    const localVideoRef = useRef(null);
+    const remoteVideoRef = useRef(null);
+    const peerRef = useRef(null);
+    const callRef = useRef(null);
 
-  const cleanup = () => {
-    pcRef.current?.getSenders?.().forEach((s) => s.track?.stop?.());
-    pcRef.current?.close?.();
-    pcRef.current = null;
-    localStreamRef.current?.getTracks?.().forEach((t) => t.stop());
-    if (socketRef.current) {
-      socketRef.current.emit("leave-room", { meetingId });
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-  };
+    // Safety check for roomId
+    const safeRoomId = roomId || "test-room";
+    const safeRole = role ? role.toLowerCase() : "student";
 
-  useEffect(() => {
-    if (!meetingId) return;
+    // Deterministic IDs ensure we can connect without a backend list
+    const getMyId = () => `${safeRoomId}-${safeRole}`;
+    const getTargetId = () => `${safeRoomId}-${safeRole === "student" ? "mentor" : "student"}`;
 
-    const connect = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: true,
+    useEffect(() => {
+        if (!roomId) {
+            console.warn("MeetingRoom: No roomId provided. Using default.");
+        }
+
+        const initPeer = async () => {
+            try {
+                // 1. Get Local Stream
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true,
+                });
+                setLocalStream(stream);
+                if (localVideoRef.current) {
+                    localVideoRef.current.srcObject = stream;
+                }
+
+                // 2. Initialize PeerJS
+                const myId = getMyId();
+                const peer = new Peer(myId, {
+                    debug: 2,
+                });
+
+                peer.on("open", (id) => {
+                    console.log("My Peer ID:", id);
+                    setPeerId(id);
+                    setStatus("Waiting for peer...");
+
+                    // If we are likely to be the caller (e.g., Student calls Mentor, or just try connecting)
+                    connectToPeer(peer, stream);
+                });
+
+                // 3. Handle Incoming Calls
+                peer.on("call", (call) => {
+                    console.log("Incoming call from:", call.peer);
+                    setStatus("Receiving call...");
+                    call.answer(stream); // Answer with our stream
+                    setupCall(call);
+                });
+
+                // 4. Handle Errors
+                peer.on("error", (err) => {
+                    console.error("Peer error:", err);
+                    if (err.type === "peer-unavailable") {
+                        setStatus("Peer not connected yet. Retrying...");
+                        setTimeout(() => {
+                            if (peerRef.current && !callRef.current) {
+                                connectToPeer(peerRef.current, stream);
+                            }
+                        }, 3000); // Retry every 3 seconds
+                    } else if (err.type === "unavailable-id") {
+                        setStatus("ID taken. Are you already in this meeting?");
+                    } else {
+                        setStatus(`Error: ${err.type}`);
+                    }
+                });
+
+                peerRef.current = peer;
+            } catch (err) {
+                console.error("Initialization error:", err);
+                setStatus("Failed to access camera/mic");
+            }
+        };
+
+        initPeer();
+
+        return () => {
+            // Cleanup
+            localStream?.getTracks().forEach((track) => track.stop());
+            peerRef.current?.destroy();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [roomId, role]);
+
+    const connectToPeer = (peer, stream) => {
+        const targetId = getTargetId();
+        console.log("Attempting to call:", targetId);
+
+        // Check if we are already connected to avoid loops
+        if (callRef.current && callRef.current.peer === targetId && callRef.current.open) {
+            return;
+        }
+
+        const call = peer.call(targetId, stream);
+        setupCall(call);
+    };
+
+    const setupCall = (call) => {
+        call.on("stream", (remoteStream) => {
+            console.log("Receiving remote stream");
+            setRemoteStream(remoteStream);
+            if (remoteVideoRef.current) {
+                remoteVideoRef.current.srcObject = remoteStream;
+            }
+            setStatus("Connected");
+            setRemotePeerId(call.peer);
         });
-        localStreamRef.current = stream;
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-      } catch (err) {
-        setStatus("Microphone/Camera blocked");
-        console.error(err);
-        return;
-      }
 
-      const socket = io("/", {
-        path: "/api/socket",
-        transports: ["websocket"],
-      });
-      socketRef.current = socket;
+        call.on("close", () => {
+            console.log("Call closed");
+            setStatus("Peer disconnected");
+            setRemoteStream(null);
+            callRef.current = null;
+        });
 
-      const createPeer = () => {
-        const pc = new RTCPeerConnection({ iceServers });
-        pc.onicecandidate = (e) => {
-          if (e.candidate) {
-            socket.emit("ice-candidate", { meetingId, candidate: e.candidate });
-          }
-        };
-        pc.ontrack = (e) => {
-          if (remoteVideoRef.current && e.streams[0]) {
-            remoteStreamRef.current = e.streams[0];
-            remoteVideoRef.current.srcObject = e.streams[0];
-          }
-        };
-        pc.onconnectionstatechange = () => {
-          setStatus(pc.connectionState);
-        };
-        localStreamRef.current?.getTracks()?.forEach((t) =>
-          pc.addTrack(t, localStreamRef.current)
-        );
-        pcRef.current = pc;
-        return pc;
-      };
+        call.on("error", (e) => {
+            console.log("Call error", e);
+            callRef.current = null;
+        });
 
-      socket.on("connect", () => {
-        setStatus("Waiting for peer…");
-        socket.emit("join-room", { meetingId });
-      });
-
-      socket.on("ready", async ({ initiator }) => {
-        const pc = pcRef.current || createPeer();
-        if (initiator) {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          socket.emit("offer", { meetingId, description: pc.localDescription });
-        }
-      });
-
-      socket.on("offer", async ({ description }) => {
-        const pc = pcRef.current || createPeer();
-        await pc.setRemoteDescription(description);
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit("answer", { meetingId, description: pc.localDescription });
-      });
-
-      socket.on("answer", async ({ description }) => {
-        if (!pcRef.current) return;
-        await pcRef.current.setRemoteDescription(description);
-      });
-
-      socket.on("ice-candidate", async ({ candidate }) => {
-        if (pcRef.current && candidate) {
-          try {
-            await pcRef.current.addIceCandidate(candidate);
-          } catch (err) {
-            console.error("Error adding ICE", err);
-          }
-        }
-      });
-
-      socket.on("peer-left", () => {
-        setStatus("Peer left");
-        remoteVideoRef.current && (remoteVideoRef.current.srcObject = null);
-      });
-
-      socket.on("disconnect", () => {
-        setStatus("Disconnected");
-      });
+        callRef.current = call;
     };
 
-    connect();
-
-    return () => {
-      cleanup();
+    const toggleMute = () => {
+        if (localStream) {
+            localStream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
+            setIsMuted(!isMuted);
+        }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meetingId]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-5xl p-4 shadow-2xl">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white text-lg font-semibold">Meeting Room</h3>
-          <div className="text-xs text-slate-300">Status: {status}</div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="relative bg-slate-800 rounded-xl overflow-hidden h-64 md:h-80">
-            <video
-              ref={localVideoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute bottom-2 left-2 text-xs text-white bg-black/50 px-2 py-1 rounded">
-              {displayName} (You)
+    const toggleVideo = () => {
+        if (localStream) {
+            localStream.getVideoTracks().forEach(track => track.enabled = !track.enabled);
+            setIsVideoOff(!isVideoOff);
+        }
+    };
+
+
+    const handleLeave = () => {
+        // Stop local media
+        if (localStream) {
+            localStream.getTracks().forEach((track) => track.stop());
+        }
+
+        // Destroy peer connection
+        if (peerRef.current) {
+            peerRef.current.destroy();
+        }
+
+        // Notify parent
+        if (onLeave) {
+            onLeave();
+        }
+
+        // Force reload if needed to clear ghosts (optional, but helps with PeerJS)
+        // window.location.reload(); 
+    };
+
+    return (
+        <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center p-4 z-50">
+            {/* Header */}
+            <div className="absolute top-4 left-4 right-4 flex justify-between items-center text-white">
+                <div>
+                    <h2 className="text-xl font-bold">Meeting: {roomId}</h2>
+                    <p className="text-slate-400 text-sm">Role: {role}</p>
+                </div>
+                <div className="bg-slate-800 px-3 py-1 rounded-full text-sm">
+                    Status: <span className={status === "Connected" ? "text-green-400" : "text-yellow-400"}>{status}</span>
+                </div>
             </div>
-          </div>
-          <div className="relative bg-slate-800 rounded-xl overflow-hidden h-64 md:h-80">
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute bottom-2 left-2 text-xs text-white bg-black/50 px-2 py-1 rounded">
-              Peer
+
+            {/* Video Grid */}
+            <div className="flex flex-col md:flex-row gap-4 w-full max-w-6xl h-[70vh]">
+                {/* Remote Video (Main Focus) */}
+                <div className="flex-1 bg-black rounded-2xl overflow-hidden relative border border-slate-800 shadow-2xl">
+                    {remoteStream ? (
+                        <video
+                            ref={remoteVideoRef}
+                            autoPlay
+                            playsInline
+                            className="w-full h-full object-contain"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 animate-pulse">
+                            <div className="text-4xl mb-4">👤</div>
+                            <p>Waiting for peer...</p>
+                            <p className="text-xs mt-2">Target ID: {getTargetId()}</p>
+                        </div>
+                    )}
+                    <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur px-3 py-1 rounded text-white text-sm">
+                        {role === "Student" ? "Mentor" : "Student"}
+                    </div>
+                </div>
+
+                {/* Local Video (PiP style or Sidebar) */}
+                <div className="w-full md:w-80 h-48 md:h-64 bg-slate-900 rounded-2xl overflow-hidden relative border border-slate-700 shadow-lg shrink-0">
+                    <video
+                        ref={localVideoRef}
+                        autoPlay
+                        muted
+                        playsInline
+                        className={`w-full h-full object-cover transform scale-x-[-1] ${isVideoOff ? 'hidden' : ''}`}
+                    />
+                    {isVideoOff && (
+                        <div className="w-full h-full flex items-center justify-center text-slate-500">
+                            📷 Video Off
+                        </div>
+                    )}
+                    <div className="absolute bottom-2 left-2 bg-black/50 backdrop-blur px-2 py-1 rounded text-white text-xs">
+                        You ({role})
+                    </div>
+                </div>
             </div>
-          </div>
+
+            {/* Controls */}
+            <div className="mt-8 flex gap-4">
+                <button
+                    onClick={toggleMute}
+                    className={`p-4 rounded-full transition ${isMuted ? 'bg-red-500 text-white' : 'bg-slate-700 text-white hover:bg-slate-600'}`}
+                >
+                    {isMuted ? "🔇 Unmute" : "🎤 Mute"}
+                </button>
+                <button
+                    onClick={toggleVideo}
+                    className={`p-4 rounded-full transition ${isVideoOff ? 'bg-red-500 text-white' : 'bg-slate-700 text-white hover:bg-slate-600'}`}
+                >
+                    {isVideoOff ? "📷 Start Video" : "🚫 Stop Video"}
+                </button>
+                <button
+                    onClick={handleLeave}
+                    className="p-4 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold px-8"
+                >
+                    Leave Call
+                </button>
+            </div>
         </div>
-        <div className="mt-4 flex justify-end gap-3">
-          <button
-            onClick={() => {
-              cleanup();
-              onClose?.();
-            }}
-            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold"
-          >
-            Leave
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default MeetingRoom;
