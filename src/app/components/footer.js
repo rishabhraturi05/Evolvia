@@ -44,6 +44,13 @@ const footer = () => {
             ))}
           </nav>
         </div>
+        <div className="mt-8 pt-8 border-t border-slate-700/50">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+            <p className="text-gray-300 text-sm md:text-base">
+              Apply for Mentor Contact - jarnavv2006@gmail.com / rishabhraturi05@gmail.com 
+            </p>
+          </div>
+        </div>
       </div>
     </footer>
   );

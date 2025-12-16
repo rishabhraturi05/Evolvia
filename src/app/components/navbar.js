@@ -7,18 +7,18 @@ import Image from 'next/image';
 // The main Navbar component
 export const Navbar = () => {
     // State to manage the visibility of the mobile menu
-//     const { data: session } = useSession()
+    //     const { data: session } = useSession()
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
-//     if(session) {
-//     return <>
-//       Signed in as {session.user.email} <br/>
-//       <button onClick={() => signOut()}>Sign out</button>
-//     </>
-//   }
+    //     if(session) {
+    //     return <>
+    //       Signed in as {session.user.email} <br/>
+    //       <button onClick={() => signOut()}>Sign out</button>
+    //     </>
+    //   }
 
     // Initialize auth state from localStorage and listen to storage changes
     useEffect(() => {
@@ -72,7 +72,7 @@ export const Navbar = () => {
         try {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-        } catch (_) {}
+        } catch (_) { }
         setIsAuthenticated(false);
         setUser(null);
         setIsDropdownOpen(false);
@@ -85,7 +85,7 @@ export const Navbar = () => {
         { href: "/Flowcharts", text: "Flowcharts" },
         { href: "/mentorships", text: "Mentorships" },
         { href: "/resources", text: "Resources" },
-        { href: "/QuizAi", text: "QuizAI"}
+        { href: "/QuizAi", text: "QuizAI" }
     ];
 
     return (
@@ -122,7 +122,7 @@ export const Navbar = () => {
                                     href={link.href}
                                     className="p-3 rounded-2xl font-medium hover:px-4 transition-all duration-100 hover:bg-[#f39d12]"
                                 >
-                                    {link.text} 
+                                    {link.text}
                                 </Link>
                             ))}
                         </button>
@@ -139,14 +139,19 @@ export const Navbar = () => {
                                         className="w-10 h-10 rounded-full bg-[#F39C12] text-white font-bold flex items-center justify-center hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F39C12]"
                                         title={user?.firstName ? `Hello, ${user.firstName}` : 'Profile'}
                                     >
-                                        {(user?.role === 'mentor') ? (user?.Name?.[0]).toUpperCase():(user?.firstName?.[0]).toUpperCase()}
+                                        {(user?.role === 'mentor') ? (user?.Name?.[0]).toUpperCase() : (user?.firstName?.[0]).toUpperCase()}
                                     </button>
                                     {isDropdownOpen && (
                                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black/5 z-50">
-                                            <div className="px-4 py-2 text-sm text-gray-700 border-b">                                                <Link href={user?.role === 'mentor' ? '/Dashboard/Mentor' : '/Dashboard/Student'}>Hello{user?.Name ? `, ${user.Name}` : `, ${user.firstName}`}                                                </Link></div>
+                                            <div className="px-4 py-2 text-sm text-gray-700 border-b">                                                Hello{user?.Name ? `, ${user.Name}` : `, ${user.firstName}`}                                                </div>
+                                            <button
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 border-b cursor-pointer hover:bg-gray-100"
+                                            ><Link href={user?.role === 'mentor' ? '/Dashboard/Mentor' : '/Dashboard/Student'}>
+                                                    Dashboard</Link>
+                                            </button>
                                             <button
                                                 onClick={handleLogout}
-                                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                                className="w-full text-left px-4 py-2 text-sm text-red-600 "
                                             >
                                                 Log out
                                             </button>
@@ -160,7 +165,7 @@ export const Navbar = () => {
                                     </button>
                                 </Link>
                             )}
-                        </div> 
+                        </div>
                     </div>
                 </div>
 
@@ -205,7 +210,7 @@ export const Navbar = () => {
                         {isAuthenticated ? (
                             <div className="space-y-2">
                                 <div className="text-gray-300 px-3">Hello{user?.firstName ? `, ${user.firstName}` : ''}</div>
-                                <Link 
+                                <Link
                                     href={user?.role === 'mentor' ? '/Dashboard/Mentor' : '/Dashboard/Student'}
                                     className="block w-full text-left bg-[#F39C12] text-[#2C3E50] font-bold py-2 px-3 rounded-md hover:bg-yellow-400 transition-colors duration-300"
                                 >

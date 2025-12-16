@@ -111,7 +111,7 @@ const Page = () => {
           name: mentor.Name || '',
           title: mentor.Title || '',
           bio: mentor.Bio || '',
-          avatar: mentor.Photo || 'https://i.pravatar.cc/600?img=1',
+          avatar: mentor.Photo || '/download.png',
           email: mentor.email || '',
         }));
         
