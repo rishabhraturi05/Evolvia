@@ -1,42 +1,54 @@
 # Evolvia 🚀
 
-Evolvia is a **full-stack mentor–student interaction platform** built to streamline mentorship scheduling, communication, and real-time meetings. The platform provides dedicated dashboards for **students** and **admins**, supports **secure authentication**, **meeting scheduling**, and **live video conferencing**, making it a complete end-to-end solution.
+**Evolvia** is a **one-stop AI-powered career guidance platform**. It combines **AI-based test analysis**, **personalized career recommendations**, **college and scholarship discovery**, and **mentor guidance** into a single, unified platform.
+---
 
-This project is designed with **modern web technologies** and focuses on scalability, clean architecture, and real-world production practices.
+## 🌟 Core Modules
+
+### 🧠 AI Test Analysis
+
+* AI-driven analysis of interest tests
+* Career recommendations
+* Strength & weakness insights
+* Career-path mapping based on performance
+
+### 💰 Scholarship Discovery
+
+* Scholarship database
+* Search for scholarships by keywords
+
+### 👨‍🎓 Student–Mentor System
+
+* Browse verified mentors
+* Request 1:1 guidance sessions
+* Track request status (Pending / Accepted / Rejected)
+* Join scheduled live sessions
+
+### 🧑‍💼 Admin Dashboard
+
+* Manage students, mentors, and content
+* Review and control mentor requests
+* Approve/reject scheduled sessions
+* Manage college & scholarship data
 
 ---
 
-## ✨ Features
+## 🎥 Real-Time Mentorship
 
-### 👨‍🎓 Student Features
+* Secure one-to-one video meetings
+* Role-based room access
+* Meetings are enabled only at the scheduled time
+* Low-latency video using cloud SDKs
 
-* Secure authentication & profile management
-* Browse available mentors
-* Send meeting requests
-* View request status (Pending / Accepted / Rejected)
-* Join live video meetings at the scheduled time
+---
 
-### 🧑‍💼 Admin Features
+## 🔐 Security & Architecture
 
-* Admin authentication
-* View all incoming meeting requests
-* Accept or reject student requests
-* Schedule meetings with mentors
-* Manage users and meetings from dashboard
-
-### 🎥 Real-Time Video Meetings
-
-* One-to-one video calling
-* Secure room-based access
-* Auto-enabled only at scheduled time
-* Low-latency communication using cloud-based video SDK
-
-### 🔐 Security & Reliability
-
-* Environment variable-based secret management
-* Role-based access control (Student / Admin)
-* Protected routes
-* Secure API handling
+* Role-based authentication (Student / Mentor / Admin)
+* JWT-based secure login
+* Protected routes & APIs
+* Environment-based secret management
+* Scalable, modular backend architecture
 
 ---
 
@@ -47,7 +59,6 @@ This project is designed with **modern web technologies** and focuses on scalabi
 * **Next.js (App Router)**
 * **React.js**
 * **Tailwind CSS**
-* **Zustand / Context API** (state management)
 
 ### Backend
 
@@ -55,22 +66,10 @@ This project is designed with **modern web technologies** and focuses on scalabi
 * **Node.js**
 * **MongoDB (Mongoose)**
 
-### Authentication
-
-* **JWT-based authentication**
-* **Role-based authorization**
-
 ### Media & Communication
 
-* **ZegoCloud / LiveKit** – video conferencing
+* **ZegoCloud** – video conferencing
 * **Cloudinary** – media storage
-
-### Dev & Tools
-
-* **Git & GitHub**
-* **Postman** – API testing
-* **dotenv** – environment variables
-
 ---
 
 ## 📂 Project Structure
@@ -82,6 +81,7 @@ Evolvia/
 ├── lib/                # DB connection & utilities
 ├── models/             # Mongoose schemas
 ├── api/                # Backend API routes
+├── ai/                 # AI logic & test analysis
 ├── public/             # Static assets
 ├── styles/             # Global styles
 ├── .env.local          # Environment variables
@@ -92,7 +92,7 @@ Evolvia/
 
 ## ⚙️ Environment Variables
 
-Create a `.env.local` file in the root directory and add:
+Create a `.env.local` file in the root directory:
 
 ```env
 MONGODB_URI=your_mongodb_connection_string
@@ -127,56 +127,8 @@ npm install
 npm run dev
 ```
 
-The app will be live at:
+App runs on:
 
 ```
 http://localhost:3000
 ```
-
----
-
-## 📸 Screenshots
-
-> *(Add screenshots of Student Dashboard, Admin Dashboard, and Video Call UI here)*
-
----
-
-## 🧠 Key Learnings
-
-* Building scalable full-stack applications using Next.js
-* Designing role-based dashboards
-* Secure authentication & authorization
-* Integrating real-time video communication
-* Managing cloud media storage
-* Production-level environment variable handling
-
----
-
-## 🚀 Future Enhancements
-
-* Group meetings & webinars
-* In-app chat system
-* Email & notification system
-* Payment integration for paid mentorship
-* Analytics dashboard for admins
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License**.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to open issues or submit pull requests.
-
----
-
-## 👤 Author
-
-**Rishabh Raturi**
-B.Tech Electrical Engineering | Full-Stack Developer
-
-If you found this project useful, consider ⭐ starring the repository!
